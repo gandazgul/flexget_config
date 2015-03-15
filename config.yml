@@ -1,0 +1,178 @@
+secrets: secrets.yml
+
+templates:
+  download:
+    seen: local
+    verify_ssl_certificates: no
+    priority: 2
+    transmission:
+      host: localhost
+      port: 9091
+      username: '{{ secrets.transmission.user }}'
+      password: '{{ secrets.transmission.password }}'
+      addpaused: no
+
+tasks:
+  #queue movies from my imdb watchlist
+  movie-queue:
+    trakt_list:
+      username: '{{secrets.trakt.user}}'
+      type: movies
+      list: watchlist
+    accept_all: yes
+    trakt_remove: 
+      username: '{{secrets.trakt.user}}'
+      password: '{{secrets.trakt.password}}'
+      list: watchlist
+    movie_queue:
+      action: add
+      quality: bluray 720p+ h264
+    priority: 1
+    seen: local
+
+  # download shows from torrent rss feeds
+  download-shows:
+    template: [download]
+    ### Main RSS feed to keep up (showrss.info)
+    rss: http://showrss.info/rss.php?user_id={{ secrets.showrss.user_id }}&hd=null&proper=null
+    ### Search on kickasstorrents to get everything.
+    #rss: https://kickass.to/usearch/pit%20bulls%20and%20parolees%20s06%2A/?rss=1&field=seeders&sorder=desc
+
+    accept_all: yes
+    exists_series:
+      - /var/lib/transmission-daemon/seeding
+      - /var/lib/transmission-daemon/tv
+      - /var/lib/transmission-daemon/downloads
+      - /media/disk1/TV/{{series_name}}
+    priority: 2
+    transmission:
+      path: /var/lib/transmission-daemon/tv
+
+  download-movies:
+    discover:
+      what:
+        - emit_movie_queue: yes
+      from:
+        #- isohunt: movies
+        #- torrentz: verified
+        #- search_rss: https://kickass.to/usearch/{{search_term}}/?rss=1&field=seeders&sorder=desc
+        #- search_rss: http://kickass.to/usearch/{{search_term}}/?rss=1
+        - kat:
+            category: movies
+            verified: yes
+
+    movie_queue: accept
+    #disable: [remember_rejected, retry_failed]
+    #seen_movies: strict
+    regexp:
+      reject:
+        - \b3D\b: {from: title}
+    priority: 2
+    transmission:
+      path: /var/lib/transmission-daemon/movies
+
+  subtitles:
+    find:
+      path: 
+        - /var/lib/transmission-daemon/tv
+        - /var/lib/transmission-daemon/movies
+      regexp: '.*\.(avi|mkv|mp4)$'
+      recursive: yes
+    regexp:
+      reject:
+        - \bsample\b: {from: title}
+    accept_all: yes
+    no_entries_ok: yes
+    seen: local
+    #disable: [retry_failed]
+    subliminal:
+      languages:
+        - eng
+      exact_match: yes
+    priority: 3
+
+  sort-shows:
+    find:
+      path: /var/lib/transmission-daemon/tv
+      regexp: '.*\.(avi|mkv|mp4)$'
+      recursive: yes
+    regexp:
+      reject:
+        - \bsample\b: {from: title}
+ 
+    series:
+      settings:
+        numeric:
+          ep_regexp:
+            - (\d\d)(\d\d)
+            - (\d)(\d\d)
+          parse_only: yes
+      numeric:
+        - The Big Bang Theory
+        - Better Call Saul
+
+    accept_all: yes
+    no_entries_ok: yes
+    seen: local
+    priority: 4
+    thetvdb_lookup: yes
+    require_field: [series_name, series_season]
+    disable: [retry_failed]
+    all_series:
+      # for some reason all_series rejects all episodes here, even with seen: local, so parse_only must be added
+      parse_only: yes
+    copy:
+      to: /media/disk1/TV/{{ series_name }}/Season {{ series_season }}
+      # save the file as "Series Name - SxxEyy - Episode Name.ext"
+      filename: '{{ tvdb_series_name }} - {{ series_id }} - {{ tvdb_ep_name|default("Unknown") }}{{ location | pathext }}'
+      along:
+        - srt
+        - en.srt
+        - sub
+        - idx
+        - nfo
+
+  sort-movies:
+    find:
+      path: /var/lib/transmission-daemon/movies
+      recursive: yes
+      regexp: '.*\.(avi|mkv|mp4)$'
+    accept_all: yes
+    no_entries_ok: yes
+    #disable: [retry_failed]
+    tmdb_lookup: yes
+    seen: local
+    priority: 4
+    regexp:
+      reject:
+        - \bsample\b: {from: title}
+    require_field: [movie_name, movie_year]
+    copy:
+      to: /media/disk1/Movies/{{ movie_name }} ({{ movie_year }})
+      filename: '{{ movie_name }} ({{ movie_year }}) - {{ quality }}{{ location | pathext }}'
+
+  clean_transmission:
+    manual: yes
+    disable: [details]
+    clean_transmission:
+      host: localhost
+      port: 9091
+      username: '{{ secrets.transmission.user }}'
+      password: '{{ secrets.transmission.password }}'
+      finished_for: 2 hours
+      min_ratio: 0.9
+      delete_files: yes
+
+schedules:
+  - tasks: 
+      - movie-queue
+      - download-shows
+      - download-movies
+    interval:
+      hours: 2
+  - tasks:
+      - subtitles
+      - sort-shows
+      - sort-movies
+    interval:
+      hours: 2

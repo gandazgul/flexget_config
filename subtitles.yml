@@ -1,0 +1,26 @@
+tasks:
+  subtitles:
+    find:
+      path:
+        - /media/disk1/TV
+        - /media/disk1/Movies
+      regexp: '.*\.(avi|mkv|mp4)$'
+      recursive: yes
+    regexp:
+      reject:
+        - \bsample\b: {from: title}
+    accept_all: yes
+    no_entries_ok: yes
+    seen: local
+    disable: [retry_failed]
+    subliminal:
+      languages:
+        - eng
+      exact_match: yes
+    priority: 3
+
+schedules:
+  - tasks:
+      - subtitles
+    interval:
+      days: 1
