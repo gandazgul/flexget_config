@@ -184,9 +184,6 @@ schedules:
       - movie-queue
       - download-shows
       - download-movies
-    interval:
-      hours: 2
-  - tasks:
       - subtitles
       - sort-shows
       - sort-movies
