@@ -49,6 +49,7 @@ tasks:
       path: /var/lib/transmission-daemon/tv
 
   download-movies:
+    template: [download]
     discover:
       what:
         - emit_movie_queue: yes
@@ -107,9 +108,23 @@ tasks:
             - (\d\d)(\d\d)
             - (\d)(\d\d)
           parse_only: yes
+        sequence:
+          identified_by: sequence
       numeric:
         - The Big Bang Theory
         - Better Call Saul
+        - The Flash 2014
+        - Mad Men
+        - Criminal Minds
+        - The Simpsons
+        - American Dad
+        - Family Guy
+        - Bones
+        - Mr Robot
+        - Masters of Sex
+      sequence:
+        - The Making Of The Mob New York
+        - Banished
 
     accept_all: yes
     no_entries_ok: yes
@@ -139,8 +154,9 @@ tasks:
       regexp: '.*\.(avi|mkv|mp4)$'
     accept_all: yes
     no_entries_ok: yes
-    #disable: [retry_failed]
+    disable: [retry_failed]
     tmdb_lookup: yes
+    imdb_lookup: yes
     seen: local
     priority: 4
     regexp:
