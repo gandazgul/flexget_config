@@ -43,7 +43,7 @@ tasks:
       - /var/lib/transmission-daemon/seeding
       - /var/lib/transmission-daemon/tv
       - /var/lib/transmission-daemon/downloads
-      - /media/disk1/TV/{{series_name}}
+      - /media/public/TV/{{series_name}}
     priority: 2
     transmission:
       path: /var/lib/transmission-daemon/tv
@@ -56,11 +56,17 @@ tasks:
       from:
         #- isohunt: movies
         #- torrentz: verified
-        #- search_rss: https://kickass.to/usearch/{{search_term}}/?rss=1&field=seeders&sorder=desc
+        #- search_rss: https://kat.cr/usearch/{{search_term}}/?rss=1&field=seeders&sorder=desc
         #- search_rss: http://kickass.to/usearch/{{search_term}}/?rss=1
-        - kat:
-            category: movies
-            verified: yes
+        #- kat:
+        #    category: movies
+        #    verified: yes
+        - rarbg: 
+             #category:
+             #  - x264 720p
+             #  - x264 1080p
+             sorted_by: seeders
+             use_tvdb: true
 
     movie_queue: accept
     #disable: [remember_rejected, retry_failed]
@@ -137,7 +143,7 @@ tasks:
       # for some reason all_series rejects all episodes here, even with seen: local, so parse_only must be added
       parse_only: yes
     copy:
-      to: /media/disk1/TV/{{ series_name }}/Season {{ series_season }}
+      to: /media/public/TV/{{ series_name }}/Season {{ series_season }}
       # save the file as "Series Name - SxxEyy - Episode Name.ext"
       filename: '{{ tvdb_series_name }} - {{ series_id }} - {{ tvdb_ep_name|default("Unknown") }}{{ location | pathext }}'
       along:
@@ -164,7 +170,7 @@ tasks:
         - \bsample\b: {from: title}
     require_field: [movie_name, movie_year]
     copy:
-      to: /media/disk1/Movies/{{ movie_name }} ({{ movie_year }})
+      to: /media/public/Movies/{{ movie_name }} ({{ movie_year }})
       filename: '{{ movie_name }} ({{ movie_year }}) - {{ quality }}{{ location | pathext }}'
 
   clean_transmission:

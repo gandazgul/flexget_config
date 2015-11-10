@@ -2,8 +2,8 @@ tasks:
   subtitles:
     find:
       path:
-        - /media/disk1/TV
-        - /media/disk1/Movies
+        - /media/public/TV
+        - /media/public/Movies
       regexp: '.*\.(avi|mkv|mp4)$'
       recursive: yes
     regexp:
