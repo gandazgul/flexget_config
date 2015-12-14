@@ -22,11 +22,11 @@ tasks:
     accept_all: yes
     trakt_remove: 
       username: '{{secrets.trakt.user}}'
-      password: '{{secrets.trakt.password}}'
+      account: 'gandazgul'
       list: watchlist
     movie_queue:
       action: add
-      quality: bluray 720p+ h264
+      quality: webdl+ 720p+
     priority: 1
     seen: local
 
@@ -38,15 +38,16 @@ tasks:
     ### Search on kickasstorrents to get everything.
     #rss: https://kickass.to/usearch/pit%20bulls%20and%20parolees%20s06%2A/?rss=1&field=seeders&sorder=desc
 
+    all_series: yes
     accept_all: yes
     exists_series:
-      - /var/lib/transmission-daemon/seeding
-      - /var/lib/transmission-daemon/tv
-      - /var/lib/transmission-daemon/downloads
+      - /media/transmission/downloading
+      - /media/transmission/tv
+      - /media/transmission/downloads
       - /media/public/TV/{{series_name}}
     priority: 2
     transmission:
-      path: /var/lib/transmission-daemon/tv
+      path: /media/transmission/tv
 
   download-movies:
     template: [download]
@@ -56,17 +57,17 @@ tasks:
       from:
         #- isohunt: movies
         #- torrentz: verified
-        #- search_rss: https://kat.cr/usearch/{{search_term}}/?rss=1&field=seeders&sorder=desc
-        #- search_rss: http://kickass.to/usearch/{{search_term}}/?rss=1
-        #- kat:
-        #    category: movies
-        #    verified: yes
-        - rarbg: 
-             #category:
-             #  - x264 720p
-             #  - x264 1080p
-             sorted_by: seeders
-             use_tvdb: true
+        #- search_rss: http://kat.cr/usearch/{{search_term}}/?rss=1&field=seeders&sorder=desc
+        #- search_rss: http://kat.cr/usearch/{{search_term}}/?rss=1
+        - kat:
+            category: movies
+            verified: yes
+        #- rarbg: 
+        #     #category:
+        #     #  - x264 720p
+        #     #  - x264 1080p
+        #     sorted_by: seeders
+        #     use_tvdb: false
 
     movie_queue: accept
     #disable: [remember_rejected, retry_failed]
@@ -76,13 +77,13 @@ tasks:
         - \b3D\b: {from: title}
     priority: 2
     transmission:
-      path: /var/lib/transmission-daemon/movies
+      path: /media/transmission/movies
 
   subtitles:
-    find:
+    filesystem:
       path: 
-        - /var/lib/transmission-daemon/tv
-        - /var/lib/transmission-daemon/movies
+        - /media/transmission/tv
+        - /media/transmission/movies
       regexp: '.*\.(avi|mkv|mp4)$'
       recursive: yes
     regexp:
@@ -99,8 +100,8 @@ tasks:
     priority: 3
 
   sort-shows:
-    find:
-      path: /var/lib/transmission-daemon/tv
+    filesystem:
+      path: /media/transmission/tv
       regexp: '.*\.(avi|mkv|mp4)$'
       recursive: yes
     regexp:
@@ -128,6 +129,7 @@ tasks:
         - Bones
         - Mr Robot
         - Masters of Sex
+        - Greys Anatomy
       sequence:
         - The Making Of The Mob New York
         - Banished
@@ -154,8 +156,8 @@ tasks:
         - nfo
 
   sort-movies:
-    find:
-      path: /var/lib/transmission-daemon/movies
+    filesystem:
+      path: /media/transmission/movies
       recursive: yes
       regexp: '.*\.(avi|mkv|mp4)$'
     accept_all: yes

@@ -2,3 +2,4 @@ secrets.yml
 *.log*
 *.sqlite
 .config-lock
+received/
