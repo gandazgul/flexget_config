@@ -3,3 +3,4 @@ secrets.yml
 *.sqlite
 .config-lock
 received/
+.idea/workspace.xml
