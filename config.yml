@@ -13,7 +13,7 @@ templates:
       addpaused: no
 
 tasks:
-  #queue movies from my imdb watchlist
+  #queue movies from my trakt watchlist
   movie-queue:
     trakt_list:
       username: '{{secrets.trakt.user}}'
@@ -22,7 +22,7 @@ tasks:
     accept_all: yes
     trakt_remove: 
       username: '{{secrets.trakt.user}}'
-      account: 'gandazgul'
+      account: '{{secrets.trakt.user}}'
       list: watchlist
     movie_queue:
       action: add
@@ -35,8 +35,6 @@ tasks:
     template: [download]
     ### Main RSS feed to keep up (showrss.info)
     rss: http://showrss.info/rss.php?user_id={{ secrets.showrss.user_id }}&hd=null&proper=null
-    ### Search on kickasstorrents to get everything.
-    #rss: https://kickass.to/usearch/pit%20bulls%20and%20parolees%20s06%2A/?rss=1&field=seeders&sorder=desc
 
     all_series: yes
     accept_all: yes
@@ -56,18 +54,12 @@ tasks:
         - emit_movie_queue: yes
       from:
         #- isohunt: movies
-        #- torrentz: verified
-        #- search_rss: http://kat.cr/usearch/{{search_term}}/?rss=1&field=seeders&sorder=desc
-        #- search_rss: http://kat.cr/usearch/{{search_term}}/?rss=1
-        - kat:
-            category: movies
-            verified: yes
-        #- rarbg: 
+        - rarbg:
         #     #category:
         #     #  - x264 720p
         #     #  - x264 1080p
-        #     sorted_by: seeders
-        #     use_tvdb: false
+             sorted_by: seeders
+             use_tvdb: false
 
     movie_queue: accept
     #disable: [remember_rejected, retry_failed]
@@ -120,19 +112,13 @@ tasks:
       numeric:
         - The Big Bang Theory
         - Better Call Saul
-        - The Flash 2014
-        - Mad Men
         - Criminal Minds
         - The Simpsons
         - American Dad
         - Family Guy
-        - Bones
         - Mr Robot
         - Masters of Sex
         - Greys Anatomy
-      sequence:
-        - The Making Of The Mob New York
-        - Banished
 
     accept_all: yes
     no_entries_ok: yes
