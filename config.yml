@@ -1,4 +1,4 @@
-secrets: secrets.yml
+variables: secrets.yml
 
 templates:
   download:
@@ -8,25 +8,26 @@ templates:
     transmission:
       host: localhost
       port: 9091
-      username: '{{ secrets.transmission.user }}'
-      password: '{{ secrets.transmission.password }}'
+      username: '{? transmission.user ?}'
+      password: '{? transmission.password ?}'
       addpaused: no
 
 tasks:
   #queue movies from my trakt watchlist
   movie-queue:
     trakt_list:
-      username: '{{secrets.trakt.user}}'
+      username: '{? trakt.user ?}'
       type: movies
       list: watchlist
     accept_all: yes
-    trakt_remove: 
-      username: '{{secrets.trakt.user}}'
-      account: '{{secrets.trakt.user}}'
-      list: watchlist
-    movie_queue:
-      action: add
-      quality: webdl+ 720p+
+    list_remove:
+      - trakt_list:
+          username: '{? trakt.user ?}'
+          account: '{? trakt.user ?}'
+          list: watchlist
+          type: movies
+    list_add:
+      - movie_list: movies from trakt
     priority: 1
     seen: local
 
@@ -34,15 +35,29 @@ tasks:
   download-shows:
     template: [download]
     ### Main RSS feed to keep up (showrss.info)
-    rss: http://showrss.info/rss.php?user_id={{ secrets.showrss.user_id }}&hd=null&proper=null
+    rss: http://showrss.info/user/{? showrss.user_id ?}.rss?magnets=true&namespaces=true&name=null&quality=null&re=null
+    ### Download one show
+    #rss: https://zooqle.com/rss/tv/10szttsi26.rss
+    #rss: http://showrss.info/show/45.rss
+
+    #html:
+    #  url: http://pirateproxy.net/search/the%20great%20british%20bake%20off%20s04*/0/99/0
+    #  title_from: url
+    #  links_re: [ magnet ]
+    #manipulate:
+    #  - title:
+    #      from: url
+    #      extract: '&dn=([^&](/^&)+)'
 
     all_series: yes
     accept_all: yes
     exists_series:
-      - /media/transmission/downloading
-      - /media/transmission/tv
-      - /media/transmission/downloads
-      - /media/public/TV/{{series_name}}
+      allow_different_qualities: better
+      path:
+        - /media/transmission/downloading
+        - /media/transmission/tv
+        - /media/transmission/downloads
+        - /media/public/TV/{{series_name}}
     priority: 2
     transmission:
       path: /media/transmission/tv
@@ -51,7 +66,7 @@ tasks:
     template: [download]
     discover:
       what:
-        - emit_movie_queue: yes
+        - movie_list: movies from trakt
       from:
         #- isohunt: movies
         - rarbg:
@@ -61,9 +76,14 @@ tasks:
              sorted_by: seeders
              use_tvdb: false
 
-    movie_queue: accept
+    list_match:
+      from:
+        - movie_list: movies from trakt
+    quality: 720p+
+    imdb_lookup: no
+    tmdb_lookup: yes
     #disable: [remember_rejected, retry_failed]
-    #seen_movies: strict
+    seen_movies: strict
     regexp:
       reject:
         - \b3D\b: {from: title}
@@ -119,6 +139,11 @@ tasks:
         - Mr Robot
         - Masters of Sex
         - Greys Anatomy
+        - Marvel's Agent Carter
+        - Gotham
+        - Modern Family
+      sequence:
+        - Replace Me
 
     accept_all: yes
     no_entries_ok: yes
@@ -126,20 +151,21 @@ tasks:
     priority: 4
     thetvdb_lookup: yes
     require_field: [series_name, series_season]
-    disable: [retry_failed]
+    disable: [remember_rejected, retry_failed]
     all_series:
       # for some reason all_series rejects all episodes here, even with seen: local, so parse_only must be added
       parse_only: yes
     copy:
       to: /media/public/TV/{{ series_name }}/Season {{ series_season }}
       # save the file as "Series Name - SxxEyy - Episode Name.ext"
-      filename: '{{ tvdb_series_name }} - {{ series_id }} - {{ tvdb_ep_name|default("Unknown") }}{{ location | pathext }}'
+      rename: '{{ tvdb_series_name }} - {{ series_id }} - {{ tvdb_ep_name|default("") }}{{ location | pathext }}'
       along:
-        - srt
-        - en.srt
-        - sub
-        - idx
-        - nfo
+        extensions:
+          - srt
+          - en.srt
+          - sub
+          - idx
+          - nfo
 
   sort-movies:
     filesystem:
@@ -149,36 +175,59 @@ tasks:
     accept_all: yes
     no_entries_ok: yes
     disable: [retry_failed]
-    tmdb_lookup: yes
-    imdb_lookup: yes
     seen: local
     priority: 4
+    imdb_lookup: yes
+    tmdb_lookup: yes
     regexp:
       reject:
         - \bsample\b: {from: title}
-    require_field: [movie_name, movie_year]
+    require_field: [tmdb_name, movie_year]
     copy:
-      to: /media/public/Movies/{{ movie_name }} ({{ movie_year }})
-      filename: '{{ movie_name }} ({{ movie_year }}) - {{ quality }}{{ location | pathext }}'
+      to: /media/public/Movies/{{ tmdb_name }} ({{ movie_year }})
+      rename: '{{ tmdb_name }} ({{ movie_year }}) - {{ quality }}{{ location | pathext }}'
 
-  clean_transmission:
+  clean-transmission:
     manual: yes
     disable: [details]
     clean_transmission:
       host: localhost
       port: 9091
-      username: '{{ secrets.transmission.user }}'
-      password: '{{ secrets.transmission.password }}'
-      finished_for: 2 hours
+      username: '{? transmission.user ?}'
+      password: '{? transmission.password ?}'
+      finished_for: 48 hours
+      min_ratio: 1
+      delete_files: yes
+
+  clean-transmission-tv:
+    manual: yes
+    rss: http://showrss.info/user/{? showrss.user_id ?}.rss?magnets=true&namespaces=true&name=null&quality=null&re=null
+    all_series:
+      # for some reason all_series rejects all episodes here, even with seen: local, so parse_only must be added
+      parse_only: yes
+    #disable: [details]
+    seen: local
+    seen_info_hash: local
+    clean_transmission:
+      host: localhost
+      port: 9091
+      username: '{? transmission.user ?}'
+      password: '{? transmission.password ?}'
+      finished_for: 24 hours
       min_ratio: 0.9
       delete_files: yes
+      directories:
+        - \A/+media/+transmission/+tv(\Z|/+.*)
+    exists_series:
+      path:
+        - /media/public/TV/{{series_name}}
 
 schedules:
   - tasks: 
       - movie-queue
       - download-shows
       - download-movies
-      - subtitles
+      #- subtitles
       - sort-shows
       - sort-movies
     interval:
