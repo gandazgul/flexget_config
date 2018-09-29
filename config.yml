@@ -54,13 +54,13 @@ tasks:
     exists_series:
       allow_different_qualities: better
       path:
-        - /media/transmission/downloading
-        - /media/transmission/tv
-        - /media/transmission/downloads
-        - /media/public/TV/{{series_name}}
+        - /data/downloading
+        - /data/tv
+        - /data/downloads
+        - /main/public/TV/{{series_name}}
     priority: 2
     transmission:
-      path: /media/transmission/tv
+      path: /data/tv
 
   download-movies:
     template: [download]
@@ -89,13 +89,13 @@ tasks:
         - \b3D\b: {from: title}
     priority: 2
     transmission:
-      path: /media/transmission/movies
+      path: /data/movies
 
   subtitles:
     filesystem:
       path: 
-        - /media/transmission/tv
-        - /media/transmission/movies
+        - /data/tv
+        - /data/movies
       regexp: '.*\.(avi|mkv|mp4)$'
       recursive: yes
     regexp:
@@ -113,7 +113,7 @@ tasks:
 
   sort-shows:
     filesystem:
-      path: /media/transmission/tv
+      path: /data/tv
       regexp: '.*\.(avi|mkv|mp4)$'
       recursive: yes
     regexp:
@@ -156,7 +156,7 @@ tasks:
       # for some reason all_series rejects all episodes here, even with seen: local, so parse_only must be added
       parse_only: yes
     copy:
-      to: /media/public/TV/{{ series_name }}/Season {{ series_season }}
+      to: /main/public/TV/{{ series_name }}/Season {{ series_season }}
       # save the file as "Series Name - SxxEyy - Episode Name.ext"
       rename: '{{ tvdb_series_name }} - {{ series_id }} - {{ tvdb_ep_name|default("") }}{{ location | pathext }}'
       along:
@@ -169,7 +169,7 @@ tasks:
 
   sort-movies:
     filesystem:
-      path: /media/transmission/movies
+      path: /data/movies
       recursive: yes
       regexp: '.*\.(avi|mkv|mp4)$'
     accept_all: yes
@@ -184,7 +184,7 @@ tasks:
         - \bsample\b: {from: title}
     require_field: [tmdb_name, movie_year]
     copy:
-      to: /media/public/Movies/{{ tmdb_name }} ({{ movie_year }})
+      to: /main/public/Movies/{{ tmdb_name }} ({{ movie_year }})
       rename: '{{ tmdb_name }} ({{ movie_year }}) - {{ quality }}{{ location | pathext }}'
 
   clean-transmission:
@@ -217,10 +217,10 @@ tasks:
       min_ratio: 0.9
       delete_files: yes
       directories:
-        - \A/+media/+transmission/+tv(\Z|/+.*)
+        - \A/+data/+tv(\Z|/+.*)
     exists_series:
       path:
-        - /media/public/TV/{{series_name}}
+        - /main/public/TV/{{series_name}}
 
 schedules:
   - tasks: 
